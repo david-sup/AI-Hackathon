@@ -139,7 +139,6 @@ export default function App() {
     sb("claims", { method: "POST", body: JSON.stringify({ topic_id: topicId, name }) })
       .then(async r => {
         const json = await r.json();
-        alert("Status: " + r.status + " Body: " + JSON.stringify(json));
         const row = Array.isArray(json) ? json[0] : json;
         if (row?.id) {
           setClaims(prev => ({ ...prev, [topicId]: (prev[topicId] || []).map(c => c.name === name ? { ...c, dbId: row.id } : c) }));
