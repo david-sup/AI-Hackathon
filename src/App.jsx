@@ -689,7 +689,7 @@ export default function App() {
       {kubaFullscreen && (
         <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div onClick={() => setKubaFullscreen(false)} style={{ display: "flex", flexDirection: "column", justifyContent: "space-evenly", padding: "0 16px", cursor: "pointer", height: "100vh", overflow: "hidden" }}>
-            {Array(20).fill("🙏").map((e, i) => <span key={i} style={{ fontSize: 128, lineHeight: 1 }}>{e}</span>)}
+            {Array(20).fill("🦵").map((e, i) => <span key={i} style={{ fontSize: 128, lineHeight: 1 }}>{e}</span>)}
           </div>
           <img src="https://i.imgur.com/Vo8R1J0.jpeg" alt="Kuba" style={{ maxHeight: "100vh", maxWidth: "calc(100vw - 200px)", objectFit: "contain" }} />
           <div onClick={() => setKubaFullscreen(false)} style={{ display: "flex", flexDirection: "column", justifyContent: "space-evenly", padding: "0 16px", cursor: "pointer", height: "100vh", overflow: "hidden" }}>
