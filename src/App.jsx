@@ -12,9 +12,9 @@ const CATEGORIES = [
       { id: "4", title: "Automatizace testovacích scénářů", description: "Např. pro Dr. Max" },
       { id: "5", title: "Kontrola nakódovaných e-mailových šablon proti zadání", description: "QA agent" },
       { id: "6", title: "Crawler pro kategorizaci cookies", description: "Vylepšení/vlastní alternativa k Cookiebotu" },
-      { id: "7", title: "Automatické doplňování komentářů do kódu a popisů k tabulkám/sloupcům", description: "" },
-      { id: "8", title: "Agent pro automatické psaní dokumentace a changelogů", description: "" },
-      { id: "9", title: "Agent kontrolující aktuálnost stávající dokumentace", description: "" },
+      { id: "7", title: "Automatické doplňování komentářů do kódu a popisů k tabulkám/sloupcům", description: "Úspora času při code review a onboardingu" },
+      { id: "8", title: "Agent pro automatické psaní dokumentace a changelogů", description: "Z kódu nebo commitů rovnou do docs" },
+      { id: "9", title: "Agent kontrolující aktuálnost stávající dokumentace", description: "Upozornění při zastaralých nebo nekonzistentních docs" },
     ]
   },
   {
@@ -24,11 +24,11 @@ const CATEGORIES = [
       { id: "10", title: "Scrapování inzerátů firem pro Business Development", description: "Zjištění, co firma řeší" },
       { id: "11", title: "Screening klienta z veřejných zdrojů a dodaných materiálů", description: "Příprava na nabídku" },
       { id: "12", title: "Srovnávač našeho řešení s komerčními aplikacemi", description: "Cena vs. přínos vs. komplexnost" },
-      { id: "13", title: "Párování dovedností a kapacit týmu s požadavky v nabídce", description: "" },
-      { id: "14", title: "Generování Business Case a Success Stories z minulých projektů a referencí", description: "" },
+      { id: "13", title: "Párování dovedností a kapacit týmu s požadavky v nabídce", description: "Kdo z týmu se hodí na daný projekt" },
+      { id: "14", title: "Generování Business Case a Success Stories z minulých projektů a referencí", description: "Podklady pro nabídky z existujících dat" },
       { id: "15", title: "Automatické generování šablony nabídky", description: "Master šablona, dodržení designu" },
       { id: "16", title: "Oponentura nabídek", description: "Kontrola chybějících informací a konzistence" },
-      { id: "17", title: "Automatická tvorba prezentací přímo z hotové nabídky", description: "" },
+      { id: "17", title: "Automatická tvorba prezentací přímo z hotové nabídky", description: "Z nabídky do slidů bez manuální práce" },
       { id: "18", title: "Hubspot automatizace", description: "Nahrávání transkriptů, generování tasků, týdenní souhrny" },
     ]
   },
@@ -37,10 +37,10 @@ const CATEGORIES = [
     name: "Management projektů a Reporting",
     topics: [
       { id: "19", title: "Analýza e-mailových kampaní", description: "Insighty z dat, co my nevidíme" },
-      { id: "20", title: "Vlastní reportingový dashboard / vizualizační tool pro klienty", description: "" },
+      { id: "20", title: "Vlastní reportingový dashboard / vizualizační tool pro klienty", description: "Přehledná data na míru každému klientovi" },
       { id: "21", title: "Activate Engine / Agency Dashboard", description: "Prioritizovaný seznam úkolů u klientů" },
       { id: "22", title: "Unified Search – vyhledávání napříč platformami", description: "Kdo, co, za kolik, kdy dělal" },
-      { id: "23", title: "Sjednocení Knowledge Base do jednoho Help-bota", description: "" },
+      { id: "23", title: "Sjednocení Knowledge Base do jednoho Help-bota", description: "Confluence, Notion, Slack – vše na jednom místě" },
       { id: "24", title: "Personalizovaný agent pro každého klienta", description: "Znalost historie, návrhy akcí" },
     ]
   },
@@ -48,10 +48,10 @@ const CATEGORIES = [
     id: "cat4",
     name: "Operativa, Time-tracking a Finance",
     topics: [
-      { id: "25", title: "Automatické zápisy do Clockify", description: "" },
+      { id: "25", title: "Automatické zápisy do Clockify", description: "Logování času bez manuálního zadávání" },
       { id: "26", title: "Synchronizace kalendáře s Clockify", description: "Při vytvoření/změně události" },
       { id: "27", title: "Automatizace výkazů a párování Projects vs. Clockify", description: "Hlídání budgetu" },
-      { id: "28", title: "Automatizace procesu fakturace a zjednodušení práce s Excely", description: "" },
+      { id: "28", title: "Automatizace procesu fakturace a zjednodušení práce s Excely", description: "Méně manuální práce s čísly a tabulkami" },
       { id: "29", title: "Plánování práce do kalendáře na základě vstupů", description: "E-mail, Slack, ClickUp" },
     ]
   },
@@ -61,8 +61,8 @@ const CATEGORIES = [
     topics: [
       { id: "30", title: "Onboarding zaměstnanců", description: "Zakládání mailů, Slacku, přístupů, úkolů v ClickUpu" },
       { id: "31", title: "Onboarding klientů", description: "Automatické uvítání, prezentace služeb, kontaktní body" },
-      { id: "32", title: "Filtrace důležitých notifikací ze Slacku", description: "" },
-      { id: "33", title: "Daily Digest / Denní přehled zajímavých newsletterů a článků z mailboxu", description: "" },
+      { id: "32", title: "Filtrace důležitých notifikací ze Slacku", description: "Jen to, co opravdu potřebuješ vidět" },
+      { id: "33", title: "Daily Digest / Denní přehled zajímavých newsletterů a článků z mailboxu", description: "Shrnutí důležitého obsahu z e-mailu každé ráno" },
     ]
   }
 ];
@@ -307,7 +307,7 @@ export default function App() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         button { cursor: pointer; font-family: inherit; }
         input, textarea { font-family: inherit; }
-        .topic-card { background: #fff; border: 1px solid #e8e8e6; border-radius: 12px; padding: 24px; transition: border-color 0.15s, box-shadow 0.15s; }
+        .topic-card { background: #fff; border: 1px solid #e8e8e6; border-radius: 12px; padding: 24px; transition: border-color 0.15s, box-shadow 0.15s; display: flex; flex-direction: column; }
         .topic-card:hover { border-color: #c8c8c4; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
         .btn-primary { background: #1a1a1a; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; letter-spacing: -0.01em; transition: background 0.15s; }
         .btn-primary:hover { background: #333; }
@@ -386,7 +386,7 @@ export default function App() {
                             <div key={topic.id} className="topic-card">
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                                 <div style={{ flex: 1, minWidth: 120 }}>
-                                  <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.02em", marginBottom: topic.description ? 4 : 0 }}>{topic.title}</h3>
+                                  <h3 style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: topic.description ? 4 : 0 }}>{topic.title}</h3>
                                   {topic.description && <p style={{ fontSize: 13, color: "#888", lineHeight: 1.5 }}>{topic.description}</p>}
                                 </div>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -414,8 +414,7 @@ export default function App() {
                                   <button className="btn-primary" onClick={() => { if (!user) { supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }); return; } setClaimModal(topic.id); setClaimName(user.user_metadata?.full_name ?? ""); }} title={user ? undefined : "Sign in to claim"}>Claim</button>
                                 </div>
                               </div>
-                              {topicClaims.length > 0 && (
-                                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #f0f0ee", display: "flex", flexWrap: "wrap", gap: 6 }}>
+                              <div style={{ marginTop: 12, minHeight: 32, paddingTop: topicClaims.length > 0 ? 12 : 0, borderTop: topicClaims.length > 0 ? "1px solid #f0f0ee" : "none", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                                   {topicClaims.map(c => (
                                     <span key={c.name} className="chip">
                                       {c.name}
@@ -424,9 +423,8 @@ export default function App() {
                                     </span>
                                   ))}
                                 </div>
-                              )}
                               {/* Comments */}
-                              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #f0f0ee" }}>
+                              <div style={{ marginTop: "auto", paddingTop: 12, borderTop: "1px solid #f0f0ee" }}>
                                 {(comments[topic.id] || []).map(c => (
                                   <div key={c.id} style={{ fontSize: 13, marginBottom: 8 }}>
                                     <span style={{ fontWeight: 600 }}>{c.name}</span>
@@ -478,7 +476,7 @@ export default function App() {
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                             <div style={{ flex: 1, minWidth: 120 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.02em", marginBottom: 4 }}>{topic.title}</h3>
+                                <h3 style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.03em", marginBottom: 4 }}>{topic.title}</h3>
                                 {idea.user_id === user?.id && <button onClick={() => handleDeleteIdea(idea.id)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#ccc", fontSize: 16, lineHeight: 1, marginBottom: 4 }} title="Delete idea">×</button>}
                               </div>
                               <p style={{ fontSize: 13, color: "#888", lineHeight: 1.5 }}>{topic.description}</p>
@@ -506,8 +504,7 @@ export default function App() {
                               <button className="btn-primary" onClick={() => { if (!user) { supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }); return; } setClaimModal(topic.id); setClaimName(user.user_metadata?.full_name ?? ""); }} title={user ? undefined : "Sign in to claim"}>Claim</button>
                             </div>
                           </div>
-                          {topicClaims.length > 0 && (
-                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #f0f0ee", display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          <div style={{ marginTop: 12, minHeight: 32, paddingTop: topicClaims.length > 0 ? 12 : 0, borderTop: topicClaims.length > 0 ? "1px solid #f0f0ee" : "none", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                               {topicClaims.map(c => (
                                 <span key={c.name} className="chip">
                                   {c.name}
@@ -515,8 +512,7 @@ export default function App() {
                                 </span>
                               ))}
                             </div>
-                          )}
-                          <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #f0f0ee" }}>
+                          <div style={{ marginTop: "auto", paddingTop: 12, borderTop: "1px solid #f0f0ee" }}>
                             {(comments[topic.id] || []).map(c => (
                               <div key={c.id} style={{ fontSize: 13, marginBottom: 8 }}>
                                 <span style={{ fontWeight: 600 }}>{c.name}</span>
