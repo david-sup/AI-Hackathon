@@ -326,6 +326,8 @@ export default function App() {
         .label { font-size: 12px; font-weight: 500; color: #666; margin-bottom: 6px; display: block; }
         .result-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; padding: 14px 0; border-bottom: 1px solid #f0f0ee; align-items: start; font-size: 14px; }
         .tag { background: #f0f0ee; color: #555; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-family: 'DM Mono', monospace; display: inline-block; }
+        .topics-grid { display: grid; gap: 8px; grid-template-columns: 1fr; }
+        @media (min-width: 700px) { .topics-grid { grid-template-columns: 1fr 1fr; } }
       `}</style>
 
       {/* Header */}
@@ -372,11 +374,11 @@ export default function App() {
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 16px", background: isOpen ? "#f5f5f3" : "#fff", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}
                     >
                       <span style={{ fontSize: 11, color: "#999", display: "inline-block", transition: "transform 0.15s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)" }}>▶</span>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a", flex: 1 }}>{cat.name}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", textTransform: "uppercase", letterSpacing: "0.06em", flex: 1 }}>{cat.name}</span>
                       <span style={{ fontSize: 11, color: "#bbb" }}>{cat.topics.length} témat{catClaims > 0 ? ` · ${catClaims} claimed` : ""}</span>
                     </button>
                     {isOpen && (
-                      <div style={{ borderTop: "1px solid #f0f0ee", padding: "10px 12px", display: "grid", gap: 8 }}>
+                      <div className="topics-grid" style={{ borderTop: "1px solid #f0f0ee", padding: "10px 12px" }}>
                         {topics.filter(t => t.category === cat.id).map(topic => {
                           const topicClaims = claims[topic.id] || [];
                           const topicResults = results[topic.id] || [];
@@ -408,7 +410,7 @@ export default function App() {
                                       <button className="btn-ghost" onClick={() => mySupervote ? handleUnSupervote(topic.id, mySupervote.id) : handleSupervote(topic.id)} disabled={!canSupervote} title={!user ? "Sign in to supervote" : !canSupervote ? "No supervotes left (3/3 used)" : mySupervote ? "Remove supervote" : `Supervote (${3 - mySupervoteCount} left)`} style={{ color: mySupervote ? "#e55" : "#e5a0a0", fontWeight: mySupervote ? 600 : 400, borderColor: mySupervote ? "#fcc" : undefined }}>▲ {topicSupervotes.length || 0}</button>
                                     </>);
                                   })()}
-                                  <button className="btn-ghost" onClick={() => { setSubmitModal(topic.id); setSubmitForm({ name: user?.user_metadata?.full_name ?? "", url: "", description: "" }); }}>Submit Result</button>
+                                  <button className="btn-ghost" onClick={() => { setSubmitModal(topic.id); setSubmitForm({ name: user?.user_metadata?.full_name ?? "", url: "", description: "" }); }} style={{ color: "#009FE3", borderColor: "#009FE3" }}>Submit Result</button>
                                   <button className="btn-primary" onClick={() => { if (!user) { supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }); return; } setClaimModal(topic.id); setClaimName(user.user_metadata?.full_name ?? ""); }} title={user ? undefined : "Sign in to claim"}>Claim</button>
                                 </div>
                               </div>
@@ -437,7 +439,7 @@ export default function App() {
                                 ))}
                                 {user && (
                                   <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                                    <input className="comment-input" value={commentInput[topic.id] || ""} onChange={e => setCommentInput(prev => ({ ...prev, [topic.id]: e.target.value }))} placeholder="Pokud už tohle nějak jde, tak tady přidej info / odkaz na zdroj a info." style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, outline: "none", fontFamily: "inherit" }} onKeyDown={e => e.key === "Enter" && handleComment(topic.id)} />
+                                    <input className="comment-input" value={commentInput[topic.id] || ""} onChange={e => setCommentInput(prev => ({ ...prev, [topic.id]: e.target.value }))} placeholder={(comments[topic.id] && comments[topic.id].length > 0) ? "Comment" : "Pokud už tohle nějak jde, tak tady přidej info / odkaz na zdroj a info."} style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, outline: "none", fontFamily: "inherit" }} onKeyDown={e => e.key === "Enter" && handleComment(topic.id)} />
                                     <button className="btn-ghost" onClick={() => handleComment(topic.id)}>Post</button>
                                   </div>
                                 )}
@@ -455,11 +457,11 @@ export default function App() {
               <div style={{ border: "1px solid #e8e8e6", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
                 <button onClick={() => toggleCat("__ideas__")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 16px", background: openCats["__ideas__"] ? "#f5f5f3" : "#fff", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
                   <span style={{ fontSize: 11, color: "#999", display: "inline-block", transition: "transform 0.15s", transform: openCats["__ideas__"] ? "rotate(90deg)" : "rotate(0deg)" }}>▶</span>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a", flex: 1 }}>Přidej svůj nápad</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", textTransform: "uppercase", letterSpacing: "0.06em", flex: 1 }}>Přidej svůj nápad</span>
                   <span style={{ fontSize: 11, color: "#bbb" }}>{ideas.length} nápad{ideas.length === 1 ? "" : "ů"}</span>
                 </button>
                 {openCats["__ideas__"] && (
-                  <div style={{ borderTop: "1px solid #f0f0ee", padding: "10px 12px", display: "grid", gap: 8 }}>
+                  <div className="topics-grid" style={{ borderTop: "1px solid #f0f0ee", padding: "10px 12px" }}>
                     <div style={{ display: "flex", gap: 8, padding: "4px 0 8px" }}>
                       {user
                         ? <><input value={ideaInput} onChange={e => setIdeaInput(e.target.value)} placeholder="NÁPAD?! 🧠🧠🧠" style={{ flex: 1, fontSize: 13, padding: "8px 12px", border: "1px solid #e0e0de", borderRadius: 8, outline: "none", fontFamily: "inherit" }} onKeyDown={e => e.key === "Enter" && handleAddIdea()} /><button className="btn-primary" onClick={handleAddIdea}>Add</button></>
@@ -500,7 +502,7 @@ export default function App() {
                                   <button className="btn-ghost" onClick={() => mySupervote ? handleUnSupervote(topic.id, mySupervote.id) : handleSupervote(topic.id)} disabled={!canSupervote} title={!user ? "Sign in to supervote" : !canSupervote ? "No supervotes left (3/3 used)" : mySupervote ? "Remove supervote" : `Supervote (${3 - mySupervoteCount} left)`} style={{ color: mySupervote ? "#e55" : "#e5a0a0", fontWeight: mySupervote ? 600 : 400, borderColor: mySupervote ? "#fcc" : undefined }}>▲ {topicSupervotes.length || 0}</button>
                                 </>);
                               })()}
-                              <button className="btn-ghost" onClick={() => { setSubmitModal(topic.id); setSubmitForm({ name: user?.user_metadata?.full_name ?? "", url: "", description: "" }); }}>Submit Result</button>
+                              <button className="btn-ghost" onClick={() => { setSubmitModal(topic.id); setSubmitForm({ name: user?.user_metadata?.full_name ?? "", url: "", description: "" }); }} style={{ color: "#009FE3", borderColor: "#009FE3" }}>Submit Result</button>
                               <button className="btn-primary" onClick={() => { if (!user) { supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }); return; } setClaimModal(topic.id); setClaimName(user.user_metadata?.full_name ?? ""); }} title={user ? undefined : "Sign in to claim"}>Claim</button>
                             </div>
                           </div>
@@ -525,7 +527,7 @@ export default function App() {
                             ))}
                             {user && (
                               <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                                <input className="comment-input" value={commentInput[topic.id] || ""} onChange={e => setCommentInput(prev => ({ ...prev, [topic.id]: e.target.value }))} placeholder="Pokud už tohle nějak jde, tak tady přidej info / odkaz na zdroj a info." style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, outline: "none", fontFamily: "inherit" }} onKeyDown={e => e.key === "Enter" && handleComment(topic.id)} />
+                                <input className="comment-input" value={commentInput[topic.id] || ""} onChange={e => setCommentInput(prev => ({ ...prev, [topic.id]: e.target.value }))} placeholder={(comments[topic.id] && comments[topic.id].length > 0) ? "Comment" : "Pokud už tohle nějak jde, tak tady přidej info / odkaz na zdroj a info."} style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, outline: "none", fontFamily: "inherit" }} onKeyDown={e => e.key === "Enter" && handleComment(topic.id)} />
                                 <button className="btn-ghost" onClick={() => handleComment(topic.id)}>Post</button>
                               </div>
                             )}
@@ -587,7 +589,7 @@ export default function App() {
               </div>
               <div>
                 <div style={{ ...colStyle, padding: "0 0 8px", borderBottom: "2px solid #e8e8e6", marginBottom: 4 }}>
-                  <span style={hdrStyle}>Points</span>
+                  <span style={{ ...hdrStyle, color: dashboardSort === "votes" ? "#555" : "#aaa", cursor: "pointer" }} onClick={() => setDashboardSort("votes")}>Points</span>
                   <span style={hdrStyle}>Topic</span>
                   <span style={{ ...hdrStyle, color: dashboardSort === "claimed" ? "#555" : "#aaa", cursor: "pointer" }} onClick={() => setDashboardSort("claimed")}>Claimed</span>
                   <span style={hdrStyle}>GitHub</span>
