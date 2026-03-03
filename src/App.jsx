@@ -151,6 +151,7 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [thankYou, setThankYou] = useState(false);
+  const [kubaFullscreen, setKubaFullscreen] = useState(false);
   const [loginDismissed, setLoginDismissed] = useState(false);
   const [dashboardSort, setDashboardSort] = useState("claimed");
   const [openCats, setOpenCats] = useState({});
@@ -358,7 +359,7 @@ export default function App() {
           <>
             {/* Hero */}
             <div style={{ marginBottom: 40 }}>
-              <h1 style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.04em", marginBottom: 8 }}>Topics</h1>
+              <h1 style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.04em", marginBottom: 8, cursor: "pointer", userSelect: "none" }} onClick={() => setKubaFullscreen(true)}>Topics</h1>
               <p style={{ color: "#888", fontSize: 15, fontWeight: 300 }}>Vyber si téma kámo</p>
               <p style={{ color: "#bbb", fontSize: 13, marginTop: 4 }}>{totalClaims} claim{totalClaims !== 1 ? "s" : ""} so far.</p>
             </div>
@@ -685,6 +686,18 @@ export default function App() {
       )}
 
       {/* Thank You Modal */}
+      {kubaFullscreen && (
+        <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={() => setKubaFullscreen(false)} style={{ display: "flex", flexDirection: "column", justifyContent: "space-evenly", padding: "0 16px", cursor: "pointer", height: "100vh", overflow: "hidden" }}>
+            {Array(20).fill("🙏").map((e, i) => <span key={i} style={{ fontSize: 128, lineHeight: 1 }}>{e}</span>)}
+          </div>
+          <img src="https://i.imgur.com/Vo8R1J0.jpeg" alt="Kuba" style={{ maxHeight: "100vh", maxWidth: "calc(100vw - 200px)", objectFit: "contain" }} />
+          <div onClick={() => setKubaFullscreen(false)} style={{ display: "flex", flexDirection: "column", justifyContent: "space-evenly", padding: "0 16px", cursor: "pointer", height: "100vh", overflow: "hidden" }}>
+            {Array(20).fill("🙏").map((e, i) => <span key={i} style={{ fontSize: 128, lineHeight: 1 }}>{e}</span>)}
+          </div>
+        </div>
+      )}
+
       {thankYou && (
         <div className="modal-overlay" onClick={() => setThankYou(false)}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: "center", width: 800, padding: 56 }}>
