@@ -374,11 +374,11 @@ export default function App() {
                           return (
                             <div key={topic.id} className="topic-card">
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
-                                <div style={{ flex: 1, minWidth: 200 }}>
+                                <div style={{ flex: 1, minWidth: 120 }}>
                                   <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.02em", marginBottom: topic.description ? 4 : 0 }}>{topic.title}</h3>
                                   {topic.description && <p style={{ fontSize: 13, color: "#888", lineHeight: 1.5 }}>{topic.description}</p>}
                                 </div>
-                                <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                                   {topicResults.length > 0 && (
                                     <span className="tag">{topicResults.length} result{topicResults.length !== 1 ? "s" : ""}</span>
                                   )}
@@ -460,14 +460,14 @@ export default function App() {
                       return (
                         <div key={topic.id} className="topic-card">
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
-                            <div style={{ flex: 1, minWidth: 200 }}>
+                            <div style={{ flex: 1, minWidth: 120 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.02em", marginBottom: 4 }}>{topic.title}</h3>
                                 {idea.user_id === user?.id && <button onClick={() => handleDeleteIdea(idea.id)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#ccc", fontSize: 16, lineHeight: 1, marginBottom: 4 }} title="Delete idea">×</button>}
                               </div>
                               <p style={{ fontSize: 13, color: "#888", lineHeight: 1.5 }}>{topic.description}</p>
                             </div>
-                            <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
+                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                               {topicResults.length > 0 && <span className="tag">{topicResults.length} result{topicResults.length !== 1 ? "s" : ""}</span>}
                               {(() => {
                                 const topicVotes = votes[topic.id] || [];
