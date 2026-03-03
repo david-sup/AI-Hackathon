@@ -414,7 +414,7 @@ export default function App() {
                                   <button className="btn-primary" onClick={() => { if (!user) { supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }); return; } setClaimModal(topic.id); setClaimName(user.user_metadata?.full_name ?? ""); }} title={user ? undefined : "Sign in to claim"}>Claim</button>
                                 </div>
                               </div>
-                              <div style={{ marginTop: 12, minHeight: 32, paddingTop: topicClaims.length > 0 ? 12 : 0, borderTop: topicClaims.length > 0 ? "1px solid #f0f0ee" : "none", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                              <div style={{ marginTop: 12, minHeight: 32, paddingTop: topicClaims.length > 0 ? 12 : 0, borderTop: "none", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "flex-start" }}>
                                   {topicClaims.map(c => (
                                     <span key={c.name} className="chip">
                                       {c.name}
@@ -424,7 +424,7 @@ export default function App() {
                                   ))}
                                 </div>
                               {/* Comments */}
-                              <div style={{ marginTop: "auto", paddingTop: 12, borderTop: "1px solid #f0f0ee" }}>
+                              <div style={{ marginTop: "auto", paddingTop: 12 }}>
                                 {(comments[topic.id] || []).map(c => (
                                   <div key={c.id} style={{ fontSize: 13, marginBottom: 8 }}>
                                     <span style={{ fontWeight: 600 }}>{c.name}</span>
@@ -504,7 +504,7 @@ export default function App() {
                               <button className="btn-primary" onClick={() => { if (!user) { supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }); return; } setClaimModal(topic.id); setClaimName(user.user_metadata?.full_name ?? ""); }} title={user ? undefined : "Sign in to claim"}>Claim</button>
                             </div>
                           </div>
-                          <div style={{ marginTop: 12, minHeight: 32, paddingTop: topicClaims.length > 0 ? 12 : 0, borderTop: topicClaims.length > 0 ? "1px solid #f0f0ee" : "none", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                          <div style={{ marginTop: 12, minHeight: 32, paddingTop: topicClaims.length > 0 ? 12 : 0, borderTop: "none", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "flex-start" }}>
                               {topicClaims.map(c => (
                                 <span key={c.name} className="chip">
                                   {c.name}
@@ -512,7 +512,7 @@ export default function App() {
                                 </span>
                               ))}
                             </div>
-                          <div style={{ marginTop: "auto", paddingTop: 12, borderTop: "1px solid #f0f0ee" }}>
+                          <div style={{ marginTop: "auto", paddingTop: 12 }}>
                             {(comments[topic.id] || []).map(c => (
                               <div key={c.id} style={{ fontSize: 13, marginBottom: 8 }}>
                                 <span style={{ fontWeight: 600 }}>{c.name}</span>
