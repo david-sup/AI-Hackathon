@@ -49,7 +49,8 @@ button:hover {
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid rgba(100, 108, 255, 0.7);
+  outline-offset: 2px;
 }
 
 input::placeholder {
@@ -57,12 +58,12 @@ input::placeholder {
 }
 
 .comment-input {
-  background: #3a3a3a;
-  color: #f0f0f0;
-  border: 1px solid #555 !important;
+  background: #fff;
+  color: #000;
+  border: 1px solid #e0e0de !important;
 }
 .comment-input::placeholder {
-  color: #aaa;
+  color: #777;
 }
 
 @media (prefers-color-scheme: light) {
