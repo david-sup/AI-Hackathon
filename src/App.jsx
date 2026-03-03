@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 const CATEGORIES = [
   {
@@ -71,11 +72,17 @@ const INITIAL_TOPICS = CATEGORIES.flatMap(c => c.topics.map(t => ({ ...t, catego
 const SUPABASE_URL = "https://vkicwekpgyjwszneachk.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZraWN3ZWtwZ3lqd3N6bmVhY2hrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODc3MzgsImV4cCI6MjA4ODA2MzczOH0.-3RulcW40sS8tfjXl4MR1k1PgvMeFE28mpPMUXtIUEI";
 
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentToken = SUPABASE_KEY;
+supabase.auth.getSession().then(({ data }) => { if (data.session?.access_token) currentToken = data.session.access_token; });
+supabase.auth.onAuthStateChange((_e, session) => { currentToken = session?.access_token ?? SUPABASE_KEY; });
+
 const sb = (path, opts = {}) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
   ...opts,
   headers: {
     "apikey": SUPABASE_KEY,
-    "Authorization": `Bearer ${SUPABASE_KEY}`,
+    "Authorization": `Bearer ${currentToken}`,
     "Content-Type": "application/json",
     "Prefer": "return=representation",
     ...opts.headers
@@ -83,11 +90,13 @@ const sb = (path, opts = {}) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
 });
 
 async function loadAll() {
-  const [claimsRes, resultsRes] = await Promise.all([
+  const [claimsRes, resultsRes, votesRes, commentsRes, supervotesRes] = await Promise.all([
     sb("claims?select=*").then(r => r.json()),
     sb("results?select=*").then(r => r.json()),
+    supabase.from("votes").select("id,topic_id,user_id").then(r => r.data ?? []),
+    sb("comments?select=*&order=created_at.asc").then(r => r.json()),
+    supabase.from("supervotes").select("id,topic_id,user_id").then(r => r.data ?? []),
   ]);
-  // Convert flat rows into { topicId: [...] } maps
   const claims = {};
   for (const row of (Array.isArray(claimsRes) ? claimsRes : [])) {
     if (!claims[row.topic_id]) claims[row.topic_id] = [];
@@ -98,30 +107,61 @@ async function loadAll() {
     if (!results[row.topic_id]) results[row.topic_id] = [];
     results[row.topic_id].push({ name: row.name, url: row.url, description: row.description, submittedAt: row.submitted_at, dbId: row.id });
   }
-  return { claims, results };
+  const votes = {};
+  for (const row of (Array.isArray(votesRes) ? votesRes : [])) {
+    if (!votes[row.topic_id]) votes[row.topic_id] = [];
+    votes[row.topic_id].push({ id: row.id, user_id: row.user_id });
+  }
+  const comments = {};
+  for (const row of (Array.isArray(commentsRes) ? commentsRes : [])) {
+    if (!comments[row.topic_id]) comments[row.topic_id] = [];
+    comments[row.topic_id].push({ id: row.id, user_id: row.user_id, name: row.name, body: row.body, created_at: row.created_at });
+  }
+  const supervotes = {};
+  for (const row of (Array.isArray(supervotesRes) ? supervotesRes : [])) {
+    if (!supervotes[row.topic_id]) supervotes[row.topic_id] = [];
+    supervotes[row.topic_id].push({ id: row.id, user_id: row.user_id });
+  }
+  const ideasRes = (await supabase.from("ideas").select("*").order("created_at", { ascending: true })).data ?? [];
+  return { claims, results, votes, comments, supervotes, ideas: ideasRes };
 }
 
 export default function App() {
   const [topics] = useState(INITIAL_TOPICS);
-  const [claims, setClaims] = useState({}); // { topicId: [{name, claimedAt}] }
-  const [results, setResults] = useState({}); // { topicId: [{name, url, description, submittedAt}] }
-  const [page, setPage] = useState("topics"); // "topics" | "results"
-  const [claimModal, setClaimModal] = useState(null); // topicId
-  const [submitModal, setSubmitModal] = useState(null); // topicId
-  const [unclaimModal, setUnclaimModal] = useState(null); // {topicId, name}
+  const [claims, setClaims] = useState({});
+  const [results, setResults] = useState({});
+  const [votes, setVotes] = useState({});
+  const [supervotes, setSupervotes] = useState({});
+  const [comments, setComments] = useState({});
+  const [commentInput, setCommentInput] = useState({});
+  const [ideas, setIdeas] = useState([]);
+  const [ideaInput, setIdeaInput] = useState("");
+  const [user, setUser] = useState(null);
+  const [page, setPage] = useState("topics");
+  const [claimModal, setClaimModal] = useState(null);
+  const [submitModal, setSubmitModal] = useState(null);
+  const [unclaimModal, setUnclaimModal] = useState(null);
   const [claimName, setClaimName] = useState("");
   const [submitForm, setSubmitForm] = useState({ name: "", url: "", description: "" });
   const [loaded, setLoaded] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [thankYou, setThankYou] = useState(false);
   const [openCats, setOpenCats] = useState({});
   const toggleCat = (id) => setOpenCats(prev => ({ ...prev, [id]: !prev[id] }));
 
   useEffect(() => {
-    loadAll().then(({ claims, results }) => {
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
+    loadAll().then(({ claims, results, votes, comments, supervotes, ideas }) => {
       setClaims(claims);
       setResults(results);
+      setVotes(votes);
+      setSupervotes(supervotes);
+      setComments(comments);
+      setIdeas(ideas);
       setLoaded(true);
     }).catch(() => setLoaded(true));
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleClaim = () => {
@@ -160,8 +200,9 @@ export default function App() {
     const entry = { name: submitForm.name.trim(), url: submitForm.url.trim(), description: submitForm.description.trim(), submittedAt: new Date().toISOString(), dbId: null };
     setResults(prev => ({ ...prev, [submitModal]: [...(prev[submitModal] || []), entry] }));
     const topicId = submitModal;
-    setSubmitForm({ name: "", url: "", description: "" });
+    setSubmitForm({ name: user?.user_metadata?.full_name ?? "", url: "", description: "" });
     setSubmitModal(null);
+    setThankYou(true);
     sb("results", { method: "POST", body: JSON.stringify({ topic_id: topicId, name: entry.name, url: entry.url, description: entry.description }) })
       .then(r => r.json())
       .then(json => {
@@ -179,6 +220,58 @@ export default function App() {
     setClaims({});
     setResults({});
     setConfirmReset(false);
+  };
+
+  const handleVote = async (topicId) => {
+    if (!user) return;
+    const { data } = await supabase.from("votes").insert({ topic_id: topicId, user_id: user.id }).select().single();
+    if (data?.id) setVotes(prev => ({ ...prev, [topicId]: [...(prev[topicId] || []), { id: data.id, user_id: user.id }] }));
+  };
+
+  const handleUnvote = async (topicId, voteId) => {
+    await supabase.from("votes").delete().eq("id", voteId);
+    setVotes(prev => ({ ...prev, [topicId]: (prev[topicId] || []).filter(v => v.id !== voteId) }));
+  };
+
+  const handleSupervote = async (topicId) => {
+    if (!user) return;
+    const { data } = await supabase.from("supervotes").insert({ topic_id: topicId, user_id: user.id }).select().single();
+    if (data?.id) setSupervotes(prev => ({ ...prev, [topicId]: [...(prev[topicId] || []), { id: data.id, user_id: user.id }] }));
+  };
+
+  const handleUnSupervote = async (topicId, voteId) => {
+    await supabase.from("supervotes").delete().eq("id", voteId);
+    setSupervotes(prev => ({ ...prev, [topicId]: (prev[topicId] || []).filter(v => v.id !== voteId) }));
+  };
+
+  const handleComment = async (topicId) => {
+    const body = commentInput[topicId]?.trim();
+    if (!body || !user) return;
+    const name = user.user_metadata?.full_name ?? user.email ?? "Anonymous";
+    const r = await sb("comments", { method: "POST", body: JSON.stringify({ topic_id: topicId, user_id: user.id, name, body }) });
+    const json = await r.json();
+    const row = Array.isArray(json) ? json[0] : json;
+    if (row?.id) setComments(prev => ({ ...prev, [topicId]: [...(prev[topicId] || []), { id: row.id, user_id: user.id, name: row.name, body: row.body, created_at: row.created_at }] }));
+    setCommentInput(prev => ({ ...prev, [topicId]: "" }));
+  };
+
+  const handleDeleteComment = async (topicId, commentId) => {
+    await supabase.from("comments").delete().eq("id", commentId);
+    setComments(prev => ({ ...prev, [topicId]: (prev[topicId] || []).filter(c => c.id !== commentId) }));
+  };
+
+  const handleAddIdea = async () => {
+    const title = ideaInput.trim();
+    if (!title || !user) return;
+    const name = user.user_metadata?.full_name ?? user.email ?? "Anonymous";
+    const { data } = await supabase.from("ideas").insert({ title, user_id: user.id, name }).select().single();
+    if (data?.id) setIdeas(prev => [...prev, data]);
+    setIdeaInput("");
+  };
+
+  const handleDeleteIdea = async (ideaId) => {
+    await supabase.from("ideas").delete().eq("id", ideaId);
+    setIdeas(prev => prev.filter(i => i.id !== ideaId));
   };
 
 
@@ -235,6 +328,14 @@ export default function App() {
             <button className="btn-ghost" onClick={() => setPage("results")} style={{ fontWeight: page === "results" ? 600 : 400, color: page === "results" ? "#1a1a1a" : "#666", borderColor: page === "results" ? "#ccc" : "#e8e8e6" }}>
               Results {totalResults > 0 && <span style={{ marginLeft: 4, background: "#1a1a1a", color: "#fff", borderRadius: "100px", padding: "1px 7px", fontSize: 11 }}>{totalResults}</span>}
             </button>
+            {user
+              ? <button className="btn-ghost" onClick={() => supabase.auth.signOut()} style={{ color: "#888" }}>
+                  Sign out ({user.user_metadata?.full_name?.split(" ")[0] ?? user.email})
+                </button>
+              : <button className="btn-ghost" onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })}>
+                  Sign in with Google
+                </button>
+            }
           </div>
         </div>
       </header>
@@ -280,8 +381,20 @@ export default function App() {
                                   {topicResults.length > 0 && (
                                     <span className="tag">{topicResults.length} result{topicResults.length !== 1 ? "s" : ""}</span>
                                   )}
-                                  <button className="btn-ghost" onClick={() => { setSubmitModal(topic.id); setSubmitForm({ name: "", url: "", description: "" }); }}>Submit Result</button>
-                                  <button className="btn-primary" onClick={() => { setClaimModal(topic.id); setClaimName(""); }}>Claim</button>
+                                  {(() => {
+                                    const topicVotes = votes[topic.id] || [];
+                                    const myVote = topicVotes.find(v => v.user_id === user?.id);
+                                    const topicSupervotes = supervotes[topic.id] || [];
+                                    const mySupervote = topicSupervotes.find(v => v.user_id === user?.id);
+                                    const mySupervoteCount = Object.values(supervotes).filter(arr => arr.some(v => v.user_id === user?.id)).length;
+                                    const canSupervote = !!user && (!!mySupervote || mySupervoteCount < 3);
+                                    return (<>
+                                      <button className="btn-ghost" onClick={() => myVote ? handleUnvote(topic.id, myVote.id) : handleVote(topic.id)} disabled={!user} title={user ? undefined : "Sign in to vote"} style={{ color: myVote ? "#1a1a1a" : "#888", fontWeight: myVote ? 600 : 400 }}>▲ {topicVotes.length || 0}</button>
+                                      <button className="btn-ghost" onClick={() => mySupervote ? handleUnSupervote(topic.id, mySupervote.id) : handleSupervote(topic.id)} disabled={!canSupervote} title={!user ? "Sign in to supervote" : !canSupervote ? "No supervotes left (3/3 used)" : mySupervote ? "Remove supervote" : `Supervote (${3 - mySupervoteCount} left)`} style={{ color: mySupervote ? "#e55" : "#e5a0a0", fontWeight: mySupervote ? 600 : 400, borderColor: mySupervote ? "#fcc" : undefined }}>▲ {topicSupervotes.length || 0}</button>
+                                    </>);
+                                  })()}
+                                  <button className="btn-ghost" onClick={() => { setSubmitModal(topic.id); setSubmitForm({ name: user?.user_metadata?.full_name ?? "", url: "", description: "" }); }}>Submit Result</button>
+                                  <button className="btn-primary" onClick={() => { if (!user) { supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }); return; } setClaimModal(topic.id); setClaimName(user.user_metadata?.full_name ?? ""); }} title={user ? undefined : "Sign in to claim"}>Claim</button>
                                 </div>
                               </div>
                               {topicClaims.length > 0 && (
@@ -295,6 +408,25 @@ export default function App() {
                                   ))}
                                 </div>
                               )}
+                              {/* Comments */}
+                              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #f0f0ee" }}>
+                                {(comments[topic.id] || []).map(c => (
+                                  <div key={c.id} style={{ fontSize: 13, marginBottom: 8 }}>
+                                    <span style={{ fontWeight: 600 }}>{c.name}</span>
+                                    <span style={{ color: "#bbb", marginLeft: 6, fontSize: 11 }}>{new Date(c.created_at).toLocaleDateString()}</span>
+                                    {c.user_id === user?.id && (
+                                      <button onClick={() => handleDeleteComment(topic.id, c.id)} style={{ background: "none", border: "none", padding: 0, marginLeft: 8, cursor: "pointer", color: "#ccc", fontSize: 13, lineHeight: 1 }} title="Delete comment">×</button>
+                                    )}
+                                    <div style={{ color: "#555", marginTop: 2, lineHeight: 1.5 }}>{c.body}</div>
+                                  </div>
+                                ))}
+                                {user && (
+                                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                                    <input className="comment-input" value={commentInput[topic.id] || ""} onChange={e => setCommentInput(prev => ({ ...prev, [topic.id]: e.target.value }))} placeholder="Pokud už tohle nějak jde, tak tady přidej info / odkaz na zdroj a info." style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, outline: "none", fontFamily: "inherit" }} onKeyDown={e => e.key === "Enter" && handleComment(topic.id)} />
+                                    <button className="btn-ghost" onClick={() => handleComment(topic.id)}>Post</button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           );
                         })}
@@ -303,6 +435,87 @@ export default function App() {
                   </div>
                 );
               })}
+
+              {/* Přidej svůj nápad */}
+              <div style={{ border: "1px solid #e8e8e6", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+                <button onClick={() => toggleCat("__ideas__")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 16px", background: openCats["__ideas__"] ? "#f5f5f3" : "#fff", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+                  <span style={{ fontSize: 11, color: "#999", display: "inline-block", transition: "transform 0.15s", transform: openCats["__ideas__"] ? "rotate(90deg)" : "rotate(0deg)" }}>▶</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#888", flex: 1 }}>Přidej svůj nápad</span>
+                  <span style={{ fontSize: 11, color: "#bbb" }}>{ideas.length} nápad{ideas.length === 1 ? "" : "ů"}</span>
+                </button>
+                {openCats["__ideas__"] && (
+                  <div style={{ borderTop: "1px solid #f0f0ee", padding: "10px 12px", display: "grid", gap: 8 }}>
+                    <div style={{ display: "flex", gap: 8, padding: "4px 0 8px" }}>
+                      {user
+                        ? <><input value={ideaInput} onChange={e => setIdeaInput(e.target.value)} placeholder="NÁPAD?! 🧠🧠🧠" style={{ flex: 1, fontSize: 13, padding: "8px 12px", border: "1px solid #e0e0de", borderRadius: 8, outline: "none", fontFamily: "inherit" }} onKeyDown={e => e.key === "Enter" && handleAddIdea()} /><button className="btn-primary" onClick={handleAddIdea}>Add</button></>
+                        : <p style={{ fontSize: 13, color: "#aaa", margin: 0 }}>Přihlas se pro přidání nápadu.</p>
+                      }
+                    </div>
+                    {ideas.length === 0 && <p style={{ fontSize: 13, color: "#bbb", margin: "4px 0" }}>Zatím žádné nápady. Buď první!</p>}
+                    {ideas.map(idea => {
+                      const topic = { id: idea.id, title: idea.title, description: `Navrhl/a ${idea.name}` };
+                      const topicClaims = claims[topic.id] || [];
+                      const topicResults = results[topic.id] || [];
+                      return (
+                        <div key={topic.id} className="topic-card">
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
+                            <div style={{ flex: 1, minWidth: 200 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.02em", marginBottom: 4 }}>{topic.title}</h3>
+                                {idea.user_id === user?.id && <button onClick={() => handleDeleteIdea(idea.id)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#ccc", fontSize: 16, lineHeight: 1, marginBottom: 4 }} title="Delete idea">×</button>}
+                              </div>
+                              <p style={{ fontSize: 13, color: "#888", lineHeight: 1.5 }}>{topic.description}</p>
+                            </div>
+                            <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
+                              {topicResults.length > 0 && <span className="tag">{topicResults.length} result{topicResults.length !== 1 ? "s" : ""}</span>}
+                              {(() => {
+                                const topicVotes = votes[topic.id] || [];
+                                const myVote = topicVotes.find(v => v.user_id === user?.id);
+                                const topicSupervotes = supervotes[topic.id] || [];
+                                const mySupervote = topicSupervotes.find(v => v.user_id === user?.id);
+                                const mySupervoteCount = Object.values(supervotes).filter(arr => arr.some(v => v.user_id === user?.id)).length;
+                                const canSupervote = !!user && (!!mySupervote || mySupervoteCount < 3);
+                                return (<>
+                                  <button className="btn-ghost" onClick={() => myVote ? handleUnvote(topic.id, myVote.id) : handleVote(topic.id)} disabled={!user} title={user ? undefined : "Sign in to vote"} style={{ color: myVote ? "#1a1a1a" : "#888", fontWeight: myVote ? 600 : 400 }}>▲ {topicVotes.length || 0}</button>
+                                  <button className="btn-ghost" onClick={() => mySupervote ? handleUnSupervote(topic.id, mySupervote.id) : handleSupervote(topic.id)} disabled={!canSupervote} title={!user ? "Sign in to supervote" : !canSupervote ? "No supervotes left (3/3 used)" : mySupervote ? "Remove supervote" : `Supervote (${3 - mySupervoteCount} left)`} style={{ color: mySupervote ? "#e55" : "#e5a0a0", fontWeight: mySupervote ? 600 : 400, borderColor: mySupervote ? "#fcc" : undefined }}>▲ {topicSupervotes.length || 0}</button>
+                                </>);
+                              })()}
+                              <button className="btn-ghost" onClick={() => { setSubmitModal(topic.id); setSubmitForm({ name: user?.user_metadata?.full_name ?? "", url: "", description: "" }); }}>Submit Result</button>
+                              <button className="btn-primary" onClick={() => { if (!user) { supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } }); return; } setClaimModal(topic.id); setClaimName(user.user_metadata?.full_name ?? ""); }} title={user ? undefined : "Sign in to claim"}>Claim</button>
+                            </div>
+                          </div>
+                          {topicClaims.length > 0 && (
+                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #f0f0ee", display: "flex", flexWrap: "wrap", gap: 6 }}>
+                              {topicClaims.map(c => (
+                                <span key={c.name} className="chip">
+                                  {c.name}
+                                  <button onClick={() => setUnclaimModal({ topicId: topic.id, name: c.name })} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", lineHeight: 1, color: "#aaa", fontSize: 14, fontWeight: 400 }} title="Unclaim">×</button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #f0f0ee" }}>
+                            {(comments[topic.id] || []).map(c => (
+                              <div key={c.id} style={{ fontSize: 13, marginBottom: 8 }}>
+                                <span style={{ fontWeight: 600 }}>{c.name}</span>
+                                <span style={{ color: "#bbb", marginLeft: 6, fontSize: 11 }}>{new Date(c.created_at).toLocaleDateString()}</span>
+                                {c.user_id === user?.id && <button onClick={() => handleDeleteComment(topic.id, c.id)} style={{ background: "none", border: "none", padding: 0, marginLeft: 8, cursor: "pointer", color: "#ccc", fontSize: 13, lineHeight: 1 }} title="Delete comment">×</button>}
+                                <div style={{ color: "#555", marginTop: 2, lineHeight: 1.5 }}>{c.body}</div>
+                              </div>
+                            ))}
+                            {user && (
+                              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                                <input className="comment-input" value={commentInput[topic.id] || ""} onChange={e => setCommentInput(prev => ({ ...prev, [topic.id]: e.target.value }))} placeholder="Pokud už tohle nějak jde, tak tady přidej info / odkaz na zdroj a info." style={{ flex: 1, fontSize: 13, padding: "6px 10px", borderRadius: 8, outline: "none", fontFamily: "inherit" }} onKeyDown={e => e.key === "Enter" && handleComment(topic.id)} />
+                                <button className="btn-ghost" onClick={() => handleComment(topic.id)}>Post</button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
@@ -362,6 +575,7 @@ export default function App() {
             <input type="text" value={claimName} onChange={e => setClaimName(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleClaim()}
               placeholder="Enter your name" autoFocus />
+            <p style={{ fontSize: 11, color: "#bbb", marginTop: 6, marginBottom: 0 }}>Signed in as {user?.user_metadata?.full_name ?? user?.email}</p>
             <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
               <button className="btn-ghost" onClick={() => setClaimModal(null)}>Cancel</button>
               <button className="btn-primary" onClick={e => { e.stopPropagation(); handleClaim(); }}>Claim</button>
@@ -394,6 +608,17 @@ export default function App() {
               <button className="btn-ghost" onClick={() => setSubmitModal(null)}>Cancel</button>
               <button className="btn-primary" onClick={handleSubmitResult}>Submit</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Thank You Modal */}
+      {thankYou && (
+        <div className="modal-overlay" onClick={() => setThankYou(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: "center", width: 800, padding: 56 }}>
+            <img src="https://i.imgur.com/Vo8R1J0.jpeg" alt="Beznohý Kuba" style={{ width: "100%", borderRadius: 8, marginBottom: 32 }} />
+            <h3 style={{ fontSize: 40, letterSpacing: "0.02em", margin: 0 }}>BEZNOHÝ KUBA TI DĚKUJE</h3>
+            <button className="btn-primary" onClick={() => setThankYou(false)} style={{ marginTop: 32, fontSize: 28 }}>🙏</button>
           </div>
         </div>
       )}

@@ -52,6 +52,19 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+input::placeholder {
+  color: #aaa;
+}
+
+.comment-input {
+  background: #3a3a3a;
+  color: #f0f0f0;
+  border: 1px solid #555 !important;
+}
+.comment-input::placeholder {
+  color: #aaa;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
