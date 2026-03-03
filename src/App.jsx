@@ -146,6 +146,7 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [thankYou, setThankYou] = useState(false);
+  const [loginDismissed, setLoginDismissed] = useState(false);
   const [openCats, setOpenCats] = useState({});
   const toggleCat = (id) => setOpenCats(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -607,6 +608,20 @@ export default function App() {
             <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
               <button className="btn-ghost" onClick={() => setSubmitModal(null)}>Cancel</button>
               <button className="btn-primary" onClick={handleSubmitResult}>Submit</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Login Prompt Modal */}
+      {loaded && !user && !loginDismissed && (
+        <div className="modal-overlay" onClick={() => setLoginDismissed(true)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ textAlign: "center" }}>
+            <h3 style={{ marginBottom: 8 }}>Okay letsgoooo</h3>
+            <p style={{ marginBottom: 20 }}>STAŇ SE SOUČÁSTÍ ALZACE</p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+              <button className="btn-ghost" onClick={() => setLoginDismissed(true)}>Browse</button>
+              <button className="btn-primary" onClick={() => supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } })}>Google Sign-in</button>
             </div>
           </div>
         </div>
