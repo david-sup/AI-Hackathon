@@ -215,7 +215,7 @@ export default function App() {
     const topicTitle = topics.find(t => t.id === topicId)?.title ?? "";
     fetch(`${SUPABASE_URL}/functions/v1/notify-slack`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${currentToken}` },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
       body: JSON.stringify({ name: entry.name, url: entry.url, description: entry.description, topic: topicTitle }),
     }).catch(e => console.error("Slack notify error:", e));
     sb("results", { method: "POST", body: JSON.stringify({ topic_id: topicId, name: entry.name, url: entry.url, description: entry.description }) })
