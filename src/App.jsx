@@ -212,6 +212,12 @@ export default function App() {
     setSubmitForm({ name: user?.user_metadata?.full_name ?? "", url: "", description: "" });
     setSubmitModal(null);
     setThankYou(true);
+    const topicTitle = topics.find(t => t.id === topicId)?.title ?? "";
+    fetch(`${SUPABASE_URL}/functions/v1/notify-slack`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${currentToken}` },
+      body: JSON.stringify({ name: entry.name, url: entry.url, description: entry.description, topic: topicTitle }),
+    }).catch(e => console.error("Slack notify error:", e));
     sb("results", { method: "POST", body: JSON.stringify({ topic_id: topicId, name: entry.name, url: entry.url, description: entry.description }) })
       .then(r => r.json())
       .then(json => {
@@ -566,7 +572,7 @@ export default function App() {
             if (aClaimed !== bClaimed) return bClaimed ? 1 : -1;
             return b.score - a.score;
           });
-          const colStyle = { display: "grid", gridTemplateColumns: "40px 2fr 1fr 1fr 1fr auto", gap: "0 12px", alignItems: "center" };
+          const colStyle = { display: "grid", gridTemplateColumns: "auto 2fr 1fr 1fr 1fr auto", gap: "0 12px", alignItems: "center" };
           const hdrStyle = { fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" };
           return (
             <>
@@ -595,7 +601,20 @@ export default function App() {
                 </div>
                 {sorted.map(t => (
                   <div key={t.id} className="result-row" style={colStyle}>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: t.score > 0 ? "#1a1a1a" : "#ddd" }}>{t.score}</div>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {(() => {
+                        const topicVotes = votes[t.id] || [];
+                        const myVote = topicVotes.find(v => v.user_id === user?.id);
+                        const topicSupervotes = supervotes[t.id] || [];
+                        const mySupervote = topicSupervotes.find(v => v.user_id === user?.id);
+                        const mySupervoteCount = Object.values(supervotes).filter(arr => arr.some(v => v.user_id === user?.id)).length;
+                        const canSupervote = !!user && (!!mySupervote || mySupervoteCount < 3);
+                        return (<>
+                          <button className="btn-ghost" onClick={() => myVote ? handleUnvote(t.id, myVote.id) : handleVote(t.id)} disabled={!user} title={user ? undefined : "Sign in to vote"} style={{ fontSize: 12, padding: "4px 8px", color: myVote ? "#1a1a1a" : "#888", fontWeight: myVote ? 600 : 400 }}>▲ {topicVotes.length || 0}</button>
+                          <button className="btn-ghost" onClick={() => mySupervote ? handleUnSupervote(t.id, mySupervote.id) : handleSupervote(t.id)} disabled={!canSupervote} title={!user ? "Sign in to supervote" : !canSupervote ? "No supervotes left (3/3 used)" : mySupervote ? "Remove supervote" : `Supervote (${3 - mySupervoteCount} left)`} style={{ fontSize: 12, padding: "4px 8px", color: mySupervote ? "#e55" : "#e5a0a0", fontWeight: mySupervote ? 600 : 400, borderColor: mySupervote ? "#fcc" : undefined }}>▲ {topicSupervotes.length || 0}</button>
+                        </>);
+                      })()}
+                    </div>
                     <div style={{ fontWeight: 500, fontSize: 14 }}>{t.title}</div>
                     <div style={{ fontSize: 13, color: "#555" }}>
                       {t.claimList.length > 0 ? t.claimList.join(", ") : <span style={{ color: "#ddd" }}>—</span>}
